@@ -1,0 +1,40 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
+
+# penmodel
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+penmodel provides tools for modeling pension fund benefits and finances. It works with the package pendata, which provides data files in a consistent format for use in penmodel.
+
+## Installation
+
+You can install the development version of penmodel like so:
+
+``` r
+# install.packages("devtools")
+devtools::install_github("donboyd5/penmodel")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example}
+library(penmodel)
+## basic example code
+```
+
