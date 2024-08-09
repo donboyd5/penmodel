@@ -20,6 +20,8 @@ knitr::opts_chunk$set(
 
 penmodel provides tools for modeling pension fund benefits and finances. It works with the package pendata, which provides data files in a consistent format for use in penmodel.
 
+The web page associated with this repo is [here](https://rock-reason-penmod.netlify.app).
+
 ## Installation
 
 You can install the development version of penmodel like so:
