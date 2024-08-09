@@ -3,15 +3,76 @@
 
 draw <- here::here("data-raw")
 
-# Florida FRS data - from the FRS2 project, but saved in the pendata project
+#. directories -- Florida FRS data - from the FRS2 project, but saved in the pendata project ----
 dfrs <- fs::path(r"(E:/R_projects/packages/pendata/data-raw/frs)")
 drds <- fs::path(dfrs, "rds")
-dfreason <- fs::path(dfrs, "from_reason")
+dfreason <- fs::path(dfrs, "from_reason") # dfreason = directory -- from reason
 
+#. libraries ----
 # source(here::here("data-raw", "libraries.r"))
 source(fs::path(draw, "libraries.r"))
 
+# . constants ----
 frs_constants <- readRDS(fs::path(drds, "frs_constants.rds"))
+
+
+# unpack workforce data ---------------------------------------------------
+# regular_wf_data <- readRDS("regular_wf_data.rds")
+# special_wf_data <- readRDS("special_wf_data.rds")
+# admin_wf_data <- readRDS("admin_wf_data.rds")
+# eco_wf_data <- readRDS("eco_wf_data.rds")
+# eso_wf_data <- readRDS("eso_wf_data.rds")
+# judges_wf_data <- readRDS("judges_wf_data.rds")
+# senior_management_wf_data <- readRDS("senior_management_wf_data.rds")
+
+wfnames <- paste0(reason_classes, "_wf_data")
+wfnames # names of wf objects to extract from Reason workspace
+
+wfclasses <- str_remove(wfnames, "_wf_data")
+
+
+# get_object(wfnames[1])
+
+# get one big list of lists of data frames
+# outer list has 7 lists, one for each class
+# each inner list has 4 data frames
+#   wf_active_df, term, refund, retire
+# they are similar but not the same in structure, but the same structure for each class
+wflist <- wfnames |>
+  purrr::map(\(x) get_object(x))|>
+  purrr::set_names(wfclasses)
+
+str(wflist[[1]])
+(wfdfnames <- wflist[[1]] |> names())
+
+# get 4 data frames, with classes stacked
+nested <- wflist |>
+  as_tibble() |>
+  mutate(dfname=wfdfnames) |>
+  pivot_longer(cols = -dfname, names_to = "class") |>
+  pivot_wider(names_from = dfname)
+
+unpack_dframes <- function(colname){
+  print(colname)
+  df <- nested |>
+    select(class, nestcol=all_of(colname)) |>
+    unnest_wider(col=nestcol) |>
+    unnest_longer(col=-class)
+  assign(colname, df, envir = .GlobalEnv)
+}
+
+purrr::walk(wfdfnames, unpack_dframes)
+
+count(wf_refund_df, class)
+count(wf_refund_df, class)
+
+# create a list of wf data frames and save it as an rds file
+wf_dataframes <- mget(wfdfnames)
+saveRDS(wf_dataframes, fs::path(dfreason, "wf_dataframes.rds"))
+
+# list2env(wf_dataframes, envir = .GlobalEnv) # put the dataframes into the environment
+
+
 
 
 # get input data ----------------------------------------------------------
@@ -20,6 +81,10 @@ frs_constants <- readRDS(fs::path(drds, "frs_constants.rds"))
 
 
 # load Reason FRS workspace into its OWN environment ------------------------------
+#   workspace was saved on 4/24/2024:
+#      in my variant of Reason FRS project -- E:/R_projects/projects/Florida-FRS-main_v2/boyd_save_to_pendata.R
+#      to pendata: save.image(fs::path(dfreason, "reason_workspace.RData"))
+
 # load takes some time
 wspath <- path(dfreason, "reason_workspace.RData")
 load(wspath, rws <- new.env())
