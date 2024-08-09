@@ -1,3 +1,4 @@
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # penmodel
@@ -16,12 +17,16 @@ The web page associated with this repo is
 
 You can install the development version of penmodel like so:
 
-    # install.packages("devtools")
-    devtools::install_github("donboyd5/penmodel")
+``` r
+# install.packages("devtools")
+devtools::install_github("donboyd5/penmodel")
+```
 
 ## Example
 
 This is a basic example which shows you how to solve a common problem:
 
-    library(penmodel)
-    ## basic example code
+``` r
+library(penmodel)
+## basic example code
+```

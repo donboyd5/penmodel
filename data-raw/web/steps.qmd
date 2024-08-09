@@ -223,6 +223,13 @@ The 7 class dataframes contain 31 rows and 96 columns.
 
 drop and frs contain 31 rows and 92 columns.
 
+-   rows are years
+-   columns are fairly standard pension model outputs such as:
+    -   payroll by db or dc, by legacy or new, plus total
+    -   aal, ava, mva, nc_rate generally by legacy or new
+    -   some other breakdowns
+    -   several derived values such as ratios
+
 The 4 variables in regular but not in drop or frs are:
 
 payroll_db_legacy_ratio, payroll_db_new_ratio, payroll_dc_legacy_ratio, payroll_dc_new_ratio
@@ -256,21 +263,102 @@ for(name in names(baseline_funding)){
   cat("\n")
 }
 
+```
+
+### Inputs to get_funding_data()
+
+#### arguments
+
+-    dr_current = dr_current_,
+-    dr_new = dr_new_,
+-    cola_tier_1_active_constant = cola_tier_1_active_constant_, yes
+-    cola_tier_1_active = cola_tier_1_active_,
+-    cola_tier_2_active = cola_tier_2_active_,
+-    cola_tier_3_active = cola_tier_3_active_,
+-    cola_current_retire = cola_current_retire_,
+-    cola_current_retire_one = cola_current_retire_one_,
+-    one_time_cola = one_time_cola_,
+-    retire_refund_ratio = retire_refund_ratio_,
+-    cal_factor = cal_factor_,
+    
+#### inputs below are for the liability model
+-    non_special_db_new_ratio = non_special_db_new_ratio_,
+-    special_db_new_ratio = special_db_new_ratio_,
+
+#### inputs below are for the funding model
+-    return_scen = return_scen_,
+-    model_return = model_return_,
+-    amo_period_new = amo_period_new_,
+-    amo_pay_growth = amo_pay_growth_,
+-    amo_method = amo_method_
+
+### data needed in the workspace ----
+
+
+
+```{r}
+
+arglist <- read_csv(
+"argname
+dr_current_
+dr_new_
+cola_tier_1_active_constant_
+cola_tier_1_active_
+cola_tier_2_active_
+cola_tier_3_active_
+")
+
+# arglist <- c("", "", "", "", "", "", "", "", "", "", "", "", "", )
 
 ```
 
 
-### Inputs to get_funding_data()
+### Reproducing results (`Florida FRS funding model.R`)
 
-### Reproducing results
+-   mcapply the function `get_liability_data` to `class_names_no_drop_frs` (the 7 classes), using the arguments below
+-   dr_current = dr_current,
+-   dr_new = dr_new,
+-   cola_tier_1_active_constant = cola_tier_1_active_constant,
+-   cola_tier_1_active = cola_tier_1_active,
+-   cola_tier_2_active = cola_tier_2_active,
+-   cola_tier_3_active = cola_tier_3_active,
+-   cola_current_retire = cola_current_retire,
+-   cola_current_retire_one = cola_current_retire_one,
+-   one_time_cola = one_time_cola,
+-   retire_refund_ratio = retire_refund_ratio,
+-   cal_factor = cal_factor,
+-   #inputs below are for the liability model
+-   non_special_db_new_ratio = non_special_db_new_ratio,
+-   special_db_new_ratio = special_db_new_ratio
+
+First task is Model calibration:
+
+-   loop through the 7 classes:
+    -   start with funding list that has 9 data frames, with dimension 31 x 92
+    -   and liability list
+    -   they **appear** to be template dataframes designed to hold results    
+    -   get fund_data and liab_data for the class
+    -   calibrate payroll ratios -- e.g., 
+        `fund_data$payroll_db_legacy_ratio <- lag(liab_data$payroll_db_legacy_est / liab_data$total_payroll_est) #use lag to align with the funding mechanism`
+        
+        these ratios appear to be new variables not in the template dataframes
+    
+
+
+```{r}
+#| label: reproduce-funding-data
+
+
+
+```
+
+
 
 The following steps reproduce the results.
-
 
 ## Reproduce `baseline_liability <- get_liability_data()` with more generalizable code
 
 ### Introduction
-
 
 ### Outputs from `get_liability_data()`
 
@@ -281,11 +369,6 @@ The following steps reproduce the results.
 baseline_liability <- readRDS(fs::path(dfreason, "baseline_liability.rds"))
 ```
 
-
 ### Inputs to get_liability_data()
 
-
 ### Reproducing results
-
-
-
