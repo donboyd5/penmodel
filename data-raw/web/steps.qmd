@@ -1,0 +1,291 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+# Steps involved in streamlining the pension model for Florida FRS
+
+## Setup
+
+```{r}
+#| label: setup
+#| output: false
+
+# source(here::here("report", "_common.R"))
+
+draw <- here::here("data-raw")
+
+#. directories -- Florida FRS data - from the FRS2 project, but saved in the pendata project ----
+dfrs <- fs::path(r"(E:/R_projects/packages/pendata/data-raw/frs)")
+drds <- fs::path(dfrs, "rds")
+dfreason <- fs::path(dfrs, "from_reason") # dfreason = directory -- from reason
+
+#. libraries ----
+# source(here::here("data-raw", "libraries.r"))
+source(fs::path(draw, "libraries.r"))
+
+# . constants ----
+frs_constants <- readRDS(fs::path(drds, "frs_constants.rds"))
+
+```
+
+```{r}
+#| label: get-object-function
+
+get_object <- function(x, envir = rws){
+  # get an object from the rws environment
+  # x is character string
+  # it is NOT saved in the global environment - assign if desired
+  get(x, envir = rws)
+}
+
+# get_object("year_range_")
+
+```
+
+## Load Reason FRS workspace
+
+```{r}
+#| label: load-reason
+
+# load Reason FRS workspace into its OWN environment I call rws ------------------------------
+
+
+
+#   workspace was saved on 4/24/2024:
+#      in my variant of Reason FRS project -- E:/R_projects/projects/Florida-FRS-main_v2/boyd_save_to_pendata.R
+#      to dfreason folder in pendata: save.image(fs::path(dfreason, "reason_workspace.RData"))
+
+# load takes some time
+wspath <- path(dfreason, "reason_workspace.RData")
+load(wspath, rws <- new.env())
+objnames <- ls(name=rws) # names of objects in the workspace
+objnames # almost 300 objects!; already sorted by name
+# get(objnames[119], envir=rws) # how to get an object from the workspace
+
+```
+
+## Copy workforce data from Reason FRS environment to global environment as stacked data frames
+
+For each of the 4 data frame types (active, term, refund, retire)
+
+-   create a stacked dataframe with all 7 classes
+-   put the df into the global environment
+
+Reason, by contrast, stored the data as 7 data frames, one for each class.
+
+The advantage of the 4 types as opposed to 7 classes is that they are generalizable to more pension systems. Most will need these demographics, whereas other systems won't have the same number or types of classes as Florida.
+
+```{r}
+#| label: unpack-workforce-data
+#| output: false
+
+# Here's how reason gets the data in their FRS model
+# regular_wf_data <- readRDS("regular_wf_data.rds")
+# special_wf_data <- readRDS("special_wf_data.rds")
+# admin_wf_data <- readRDS("admin_wf_data.rds")
+# eco_wf_data <- readRDS("eco_wf_data.rds")
+# eso_wf_data <- readRDS("eso_wf_data.rds")
+# judges_wf_data <- readRDS("judges_wf_data.rds")
+# senior_management_wf_data <- readRDS("senior_management_wf_data.rds")
+
+# we'll get them all from the previously saved environment
+
+
+# prepare class names and dataframe names ---------------------------------
+
+# oddly, Reason used seniormanagement as a class name
+#  but used senior_management in dataframe names
+
+wfclasses <- frs_constants$classes |>
+  str_replace("seniormanagement", "senior_management")
+
+wfnames <- paste0(wfclasses, "_wf_data")
+wfnames # names of wf objects to extract from Reason workspace
+
+cbind(wfclasses, wfnames) # make sure they look right
+
+
+# unpack the data -------
+# get_object(wfnames[1])
+
+# get one big list of lists of data frames
+# outer list has 7 lists, one for each class
+# each inner list has 4 data frames
+#   wf_active_df, term, refund, retire
+# they are similar but not the same in structure, but the same structure for each class
+
+wflist <- wfnames |>
+  purrr::map(\(x) get_object(x))|>
+  purrr::set_names(wfclasses)
+
+names(wflist)
+(wfdfnames <- names(wflist[[1]]))
+
+# get 4 data frames, with classes stacked
+nested <- wflist |>
+  as_tibble() |>
+  mutate(dfname=wfdfnames) |>
+  pivot_longer(cols = -dfname, names_to = "class") |>
+  pivot_wider(names_from = dfname)
+# note that wf_retire_df is a dt data.table, others are df data.frame
+
+# if needed we can convert with:
+# nested |>
+#   mutate(wf_retire_df = map(wf_retire_df, as.data.frame))
+
+unpack_dframes <- function(colname){
+  # for a single data frame name (colname), stack all 7 classes into a single data frame
+  # and put the stacked data frame into the environment
+  print(colname)
+  df <- nested |>
+    select(class, nestcol=all_of(colname)) |>
+    unnest_wider(col=nestcol) |>
+    unnest_longer(col=-class)
+  assign(colname, df, envir = .GlobalEnv)
+}
+
+purrr::walk(wfdfnames, unpack_dframes)  # unpack and stack all classes for each of the 4 data frames
+
+```
+
+```{r}
+#| label: look-at-wf-data-frames
+#| output: true
+
+# take a look
+count(wf_refund_df, class)
+
+for(name in wfdfnames){
+  print(name)
+  glimpse(get(name))
+} 
+
+```
+
+Here's an example of code (not run) that can be used to get a saved list of workforce data frames and put them individually into the global environment.
+
+```{r}
+#| label: example-code
+#| eval: false
+#| code-fold: false
+
+wf_dataframes <- readRDS(fs::path(dfreason, "wf_dataframes.rds"))
+length(wf_dataframes)
+names(wf_dataframes) # wf_active_df,... term, refund, retire
+list2env(wf_dataframes, envir = .GlobalEnv) # unlist them into the global environment
+rm(wf_dataframes) # remove the list
+
+```
+
+## Reproduce `baseline_funding <- get_funding_data()` with more generalizable code
+
+### Introduction
+
+In the FRS project, `get_funding_data()` is in `Florida FRS funding model.R, which` is sourced before running get_funding_data().
+
+The R file has live code in addition to functions. Here is the live code -- not run -- but we have the information it creates.
+
+```{r}
+#| label: Florida-FRS-funding-model-live-code
+#| eval: false
+#| code-fold: false
+
+class_names <- init_funding_data$class
+funding_list <- lapply(class_names, get_funding_table)
+names(funding_list) <- class_names
+
+current_amort_layers_table <- current_amort_layers_table_ %>% 
+  mutate(amo_period = if_else(amo_period == "n/a", "20", amo_period),
+         amo_period = as.numeric(amo_period)) %>% 
+  group_by(class, amo_period) %>%
+  summarise(amo_balance = sum(amo_balance)) %>% 
+  #make sure that the amo periods are arranged in descending order
+  arrange(class, desc(amo_period)) %>% 
+  ungroup()
+
+#More groups for class names:
+class_names_no_drop_frs <- class_names[!class_names %in% c("drop", "frs")]
+class_names_no_frs <- class_names[!class_names %in% c("frs")]
+
+```
+
+In addition, the file has the two functions shown below, the second of which has 6 functions nested within it:
+
+![](images/clipboard-227634940.png)
+
+### Outputs from `get_funding_data()`
+
+baseline_funding contains 9 data frames, one for each of the 7 classes, plus one for drop and one for frs as a whole. details below.
+
+The 7 class dataframes contain 31 rows and 96 columns.
+
+drop and frs contain 31 rows and 92 columns.
+
+The 4 variables in regular but not in drop or frs are:
+
+payroll_db_legacy_ratio, payroll_db_new_ratio, payroll_dc_legacy_ratio, payroll_dc_new_ratio
+
+It seems like we should be able to stack these 9 data frames into a single data frame with a class column and work with them as a group? TBD.
+
+```{r}
+#| label: get-baseline-funding
+
+baseline_funding <- readRDS(fs::path(dfreason, "baseline_funding.rds"))
+
+print("data frames in baseline_funding: ")
+names(baseline_funding)
+
+print("\n column names in baseline_funding regular: ")
+names(baseline_funding[["regular"]])
+
+print("\nglimpse of baseline_funding$regular")
+glimpse(baseline_funding$regular)
+
+print("\ndimensions and variables for the 9 data frames:")
+
+for(name in names(baseline_funding)){
+  cat("\n")
+  cat(name, "\n")
+  cat("rows, cols: ", dim(baseline_funding[[name]]), "\n")
+  diffs <- setdiff(names(baseline_funding[["regular"]]),
+                   names(baseline_funding[[name]]))
+  cat("variables in regular but not in", name, ":\n  ")
+  cat(diffs, sep=", ")
+  cat("\n")
+}
+
+
+```
+
+
+### Inputs to get_funding_data()
+
+### Reproducing results
+
+The following steps reproduce the results.
+
+
+## Reproduce `baseline_liability <- get_liability_data()` with more generalizable code
+
+### Introduction
+
+
+### Outputs from `get_liability_data()`
+
+```{r}
+#| label: get-baseline-liability
+#| eval: false
+
+baseline_liability <- readRDS(fs::path(dfreason, "baseline_liability.rds"))
+```
+
+
+### Inputs to get_liability_data()
+
+
+### Reproducing results
+
+
+
