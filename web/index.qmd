@@ -6,6 +6,11 @@ editor_options:
 
 # Introduction
 
+## links
+
+-   [project web page](https://rock-reason-penmod.netlify.app)
+-   [pendata](https://github.com/donboyd5/pendata) on github
+-   [penmod](https://github.com/donboyd5/penmodel) on github
 
 ## Plan
 
@@ -41,16 +46,6 @@ editor_options:
     -   Create data in flexible format for a 2nd pension system
     -   Run through penmod
     -   Establish generalizable tests (?)
-
-## Setup
-
-```{r}
-#| label: setup
-#| output: false
-
-# source(here::here("report", "_common.R"))
-
-```
 
 
 
