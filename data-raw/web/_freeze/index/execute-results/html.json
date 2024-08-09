@@ -1,0 +1,15 @@
+{
+  "hash": "4aee931acbe3312a11b7e7258e547b90",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\noutput: html_document\neditor_options: \n  chunk_output_type: inline\n---\n\n\n\n\n# Introduction\n\n## links\n\n-   [project web page](https://rock-reason-penmod.netlify.app)\n-   [pendata](https://github.com/donboyd5/pendata) on github\n-   [penmod](https://github.com/donboyd5/penmodel) on github\n\n## Plan\n\n-   Within penmod package, reproduce Reason FRS results:\n\n    -   Read in data created by the Reason FRS project, in the formats used by the FRS project\n    -   Convert data as needed to flexible formats\n    -   Create generalized pension model functions to produce the same results as FRS project, using the flexible formats\n    -   Establish formal tests to verify that Reason results are reproduced\n    \n-   Return to the pendata package\n\n    -   Finish creating FRS data in flexible formats drawing from source files rather than Reason-FRS-created files\n\n-   Return to penmod package\n\n    -   Verify that the generalized-format FRS data from the pendata package, run through penmod, still reproduces the Reason FRS results\n    -   Use formal tests to verify this\n    \n-   Return to pendata package\n\n    -   Consider, in consultation with Reason, some small technical improvements to data handling in FRS (improvements that can be generalized to other plans)\n    -   Implement agreed-upon improvements\n    \n-   Return to penmod package\n\n    -   Run improved FRS data through penmod package\n    -   Compare results to earlier Reason-FRS results\n    -   When results are approved (albeit different from Reason-FRS results), establish formal tests to verify that future penmod code changes do not change these results\n\n-   Return to pendata package\n\n    -   Create data in flexible format for a 2nd pension system\n    -   Run through penmod\n    -   Establish generalizable tests (?)\n\n## Setup\n\n\n\n\n::: {.cell}\n\n```{.r .cell-code}\n# source(here::here(\"report\", \"_common.R\"))\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
