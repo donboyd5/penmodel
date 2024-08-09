@@ -1,0 +1,56 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: inline
+---
+
+# Introduction
+
+
+## Plan
+
+-   Within penmod package, reproduce Reason FRS results:
+
+    -   Read in data created by the Reason FRS project, in the formats used by the FRS project
+    -   Convert data as needed to flexible formats
+    -   Create generalized pension model functions to produce the same results as FRS project, using the flexible formats
+    -   Establish formal tests to verify that Reason results are reproduced
+    
+-   Return to the pendata package
+
+    -   Finish creating FRS data in flexible formats drawing from source files rather than Reason-FRS-created files
+
+-   Return to penmod package
+
+    -   Verify that the generalized-format FRS data from the pendata package, run through penmod, still reproduces the Reason FRS results
+    -   Use formal tests to verify this
+    
+-   Return to pendata package
+
+    -   Consider, in consultation with Reason, some small technical improvements to data handling in FRS (improvements that can be generalized to other plans)
+    -   Implement agreed-upon improvements
+    
+-   Return to penmod package
+
+    -   Run improved FRS data through penmod package
+    -   Compare results to earlier Reason-FRS results
+    -   When results are approved (albeit different from Reason-FRS results), establish formal tests to verify that future penmod code changes do not change these results
+
+-   Return to pendata package
+
+    -   Create data in flexible format for a 2nd pension system
+    -   Run through penmod
+    -   Establish generalizable tests (?)
+
+## Setup
+
+```{r}
+#| label: setup
+#| output: false
+
+# source(here::here("report", "_common.R"))
+
+```
+
+
+

@@ -1,7 +1,11 @@
 
+# setup ----------------------------------------------------------
 
 draw <- here::here("data-raw")
+
+# Florida FRS data - from the FRS2 project, but saved in the pendata project
 dfrs <- fs::path(r"(E:/R_projects/packages/pendata/data-raw/frs)")
+drds <- fs::path(dfrs, "rds")
 dfreason <- fs::path(dfrs, "from_reason")
 
 # source(here::here("data-raw", "libraries.r"))
@@ -15,31 +19,63 @@ frs_constants <- readRDS(fs::path(drds, "frs_constants.rds"))
 # source(here::here("data-raw", "frs", "_common_frs.R"))
 
 
-# load Reason workspace into its own environment ------------------------------
+# load Reason FRS workspace into its OWN environment ------------------------------
 # load takes some time
 wspath <- path(dfreason, "reason_workspace.RData")
 load(wspath, rws <- new.env())
 objnames <- ls(name=rws) # names of objects in the workspace
-objnames
+objnames # almost 300 objects!; already sorted by name
 # get(objnames[119], envir=rws) # how to get an object from the workspace
 
 get_object <- function(x){
-  # get an object from the workspace
+  # x is character string
+  # get an object from the rws environment
+  # it is NOT saved in the global environment - assign if desired
   get(x, envir = rws)
 }
 
-reason_classes <- frs_constants$classes |>
-  str_replace("seniormanagement", "senior_management")
+get_object("year_range_")
 
+
+reason_classes <- frs_constants$classes |>
+  # why do I do this next statement? maybe because object names have senior_management in them? comment!
+  str_replace("seniormanagement", "senior_management") |>
+  sort()
+reason_classes
+
+# get a list of workforce dataframes from pendata
 wf_dataframes <- readRDS(fs::path(dfreason, "wf_dataframes.rds"))
-list2env(wf_dataframes, envir = .GlobalEnv)
+length(wf_dataframes)
+names(wf_dataframes) # wf_active_df,... term, refund, retire
+list2env(wf_dataframes, envir = .GlobalEnv) # unlist them into the global environment
+rm(wf_dataframes) # remove the list
 
 
 # example code for getting objects ------------------------------------------------
 
-wflist <- wfnames |>
-  purrr::map(\(x) get_object(x))|>
+## get the workforce data frames from the reason workspace environment (produced by FRS2) ----
+# get workforce dataframe names for objects in the rws environment
+(env_wfdf_names <- str_subset(objnames, "wf_data") |> str_subset("get_wf_data", negate=TRUE)) |> sort() # 7 class names
+
+# map the rws environment names Reason used for dataframes to the names Reason used for classes
+class_mapping <- tibble(
+  envname=env_wfdf_names,
+  classname=reason_classes)
+class_mapping # inspect to be sure the names are properly aligned
+
+
+# wfnames: 4 classes
+# wfclasses:
+
+
+wflist <- class_mapping$envname |>
+  # get 7 sets of 4 objects from rws (reason workspace) active, term, refund, retire
+  purrr::map(\(x) get_object(x))|> # one row per wfname
   purrr::set_names(wfclasses)
+names(wflist) # 7 classes
+length(wflist)
+
+names(tmp)
 
 str(wflist[[1]])
 (wfdfnames <- wflist[[1]] |> names())
